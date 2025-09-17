@@ -15,6 +15,9 @@ import {
   Box,
   IconButton,
   Divider,
+  CircularProgress,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 
@@ -31,12 +34,10 @@ const [metaMask, hooks] = initializeConnector(
 const { useAccounts, useIsActive, useProvider } = hooks;
 
 const contractChain = 11155111; // Sepolia Testnet
-const contractAddress = "0x157Ee72b81b996766c15e21A820107388B1b04C5"; // 👉 ใส่ Smart Contract ของคุณ
+const contractAddress = "0x157Ee72b81b996766c15e21A820107388B1b04C5";
 
 const getAddressTxt = (str, s = 6, e = 6) => {
-  if (str) {
-    return `${str.slice(0, s)}...${str.slice(str.length - e)}`;
-  }
+  if (str) return `${str.slice(0, s)}...${str.slice(str.length - e)}`;
   return "";
 };
 
@@ -46,36 +47,51 @@ export default function Page() {
   const provider = useProvider();
 
   const [balance, setBalance] = useState("");
-  const [ETHValue, setETHValue] = useState(0);
+  const [ETHValue, setETHValue] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [notification, setNotification] = useState({ open: false, message: "", severity: "success" });
 
-  useEffect(() => {
-    const fetchBalance = async () => {
-      if (!provider || !accounts || accounts.length === 0) return;
+  const fetchBalance = async () => {
+    if (!provider || !accounts || accounts.length === 0) return;
+    try {
+      setLoading(true);
       const signer = provider.getSigner();
       const smartContract = new ethers.Contract(contractAddress, abi, signer);
       const myBalance = await smartContract.balanceOf(accounts[0]);
       setBalance(formatEther(myBalance));
-    };
+    } catch (err) {
+      setNotification({ open: true, message: err.message, severity: "error" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     if (isActive) fetchBalance();
   }, [isActive, provider, accounts]);
 
   const handleBuy = async () => {
-    if (ETHValue <= 0) return;
-    const signer = provider.getSigner();
-    const smartContract = new ethers.Contract(contractAddress, abi, signer);
-    const weiValue = parseUnits(ETHValue.toString(), "ether");
-    const tx = await smartContract.buy({ value: weiValue.toString() });
-    console.log("Transaction hash:", tx.hash);
+    if (!ETHValue || ETHValue <= 0) return;
+    try {
+      setLoading(true);
+      const signer = provider.getSigner();
+      const smartContract = new ethers.Contract(contractAddress, abi, signer);
+      const weiValue = parseUnits(ETHValue.toString(), "ether");
+      const tx = await smartContract.buy({ value: weiValue.toString() });
+      await tx.wait();
+      setNotification({ open: true, message: "Transaction Successful!", severity: "success" });
+      setETHValue("");
+      fetchBalance(); // refresh balance
+    } catch (err) {
+      setNotification({ open: true, message: err.message, severity: "error" });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleConnect = () => {
-    metaMask.activate(contractChain);
-  };
-
-  const handleDisconnect = () => {
-    metaMask.resetState();
-  };
+  const handleConnect = () => metaMask.activate(contractChain);
+  const handleDisconnect = () => metaMask.resetState();
+  const handleCloseNotification = () => setNotification({ ...notification, open: false });
 
   return (
     <div>
@@ -107,45 +123,60 @@ export default function Page() {
 
       {/* Card */}
       <Container maxWidth="sm" sx={{ mt: 2 }}>
-        {isActive ? (
+        {isActive && (
           <Card>
-  <CardContent>
-    <Stack spacing={2}>
-      <Typography variant="h6">UDS</Typography>
-      
-      {/* แสดง Address */}
-      <TextField 
-        label="Address" 
-        value={accounts[0]} 
-        InputProps={{ readOnly: true }} 
-      />
+            <CardContent>
+              <Stack spacing={2}>
+                <Typography variant="h6">UDS</Typography>
+                
+                {/* Address */}
+                <TextField
+                  label="Address"
+                  value={accounts[0]}
+                  InputProps={{ readOnly: true }}
+                />
 
-      {/* แสดง Balance */}
-      <TextField 
-        label="UDS Balance" 
-        value={balance} 
-        InputProps={{ readOnly: true }} 
-      />
+                {/* Balance */}
+                <TextField
+                  label="UDS Balance"
+                  value={balance}
+                  InputProps={{ readOnly: true }}
+                />
 
-      <Divider />
+                <Divider />
 
-      {/* กรอก ETH */}
-      <Typography>Buy UDS (1 ETH = 10 UDS)</Typography>
-      <TextField
-        label="ETH"
-        type="number"
-        onChange={e => setETHValue(e.target.value)}
-      />
+                {/* Buy ETH */}
+                <Typography>Buy UDS (1 ETH = 10 UDS)</Typography>
+                <TextField
+                  label="ETH"
+                  type="number"
+                  value={ETHValue}
+                  onChange={e => setETHValue(e.target.value)}
+                />
 
-      <Button variant="contained" onClick={handleBuy}>
-        BUY
-      </Button>
-    </Stack>
-  </CardContent>
-</Card>
-
-        ) : null}
+                <Button
+                  variant="contained"
+                  onClick={handleBuy}
+                  disabled={loading || !ETHValue || ETHValue <= 0}
+                >
+                  {loading ? <CircularProgress size={24} /> : "BUY"}
+                </Button>
+              </Stack>
+            </CardContent>
+          </Card>
+        )}
       </Container>
+
+      {/* Notification */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={5000}
+        onClose={handleCloseNotification}
+      >
+        <Alert onClose={handleCloseNotification} severity={notification.severity}>
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }
