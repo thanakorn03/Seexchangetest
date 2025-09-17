@@ -52,19 +52,30 @@ export default function Page() {
   const [notification, setNotification] = useState({ open: false, message: "", severity: "success" });
 
   const fetchBalance = async () => {
-    if (!provider || !accounts || accounts.length === 0) return;
+  if (!provider || !accounts || accounts.length === 0) return;
+
+  try {
+    setLoading(true);
+    const signer = provider.getSigner();
+    const smartContract = new ethers.Contract(contractAddress, abi, signer);
+
+    let myBalance;
     try {
-      setLoading(true);
-      const signer = provider.getSigner();
-      const smartContract = new ethers.Contract(contractAddress, abi, signer);
-      const myBalance = await smartContract.balanceOf(accounts[0]);
-      setBalance(formatEther(myBalance));
+      myBalance = await smartContract.balanceOf(accounts[0]);
     } catch (err) {
-      setNotification({ open: true, message: err.message, severity: "error" });
-    } finally {
-      setLoading(false);
+      // กรณี contract ไม่ตอบหรือ return 0x
+      console.warn("Cannot fetch balance, returning 0:", err.message);
+      myBalance = ethers.BigNumber.from("0");
     }
-  };
+
+    setBalance(formatEther(myBalance));
+  } catch (err) {
+    setNotification({ open: true, message: err.message, severity: "error" });
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     if (isActive) fetchBalance();
