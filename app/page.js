@@ -31,7 +31,7 @@ const [metaMask, hooks] = initializeConnector(
 const { useAccounts, useIsActive, useProvider } = hooks;
 
 const contractChain = 11155111; // Sepolia Testnet
-const contractAddress = "0x..."; // 👉 ใส่ Smart Contract ของคุณ
+const contractAddress = "0x157Ee72b81b996766c15e21A820107388B1b04C5"; // 👉 ใส่ Smart Contract ของคุณ
 
 const getAddressTxt = (str, s = 6, e = 6) => {
   if (str) {
