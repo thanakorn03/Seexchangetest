@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import { initializeConnector } from "@web3-react/core";
 import { MetaMask } from "@web3-react/metamask";
@@ -11,11 +10,13 @@ const { useChainId, useAccounts, useIsActive, useProvider } = hooks;
 
 const contractChain = 11155111; // Sepolia Testnet
 
+// ✅ ให้มี export default แค่ครั้งเดียว
 export default function Page() {
   const chainId = useChainId();
   const accounts = useAccounts();
   const isActive = useIsActive();
   const provider = useProvider();
+
   const [error, setError] = useState(undefined);
 
   useEffect(() => {
@@ -44,32 +45,5 @@ export default function Page() {
         <input type="button" onClick={handleConnect} value="Connect" />
       )}
     </div>
-  );
-}
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Button,
-  IconButton,
-  Box
-} from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-
-export default function NavBar() {
-  return (
-    <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static">
-        <Toolbar>
-          <IconButton edge="start" color="inherit" aria-label="menu">
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            My DApp
-          </Typography>
-          <Button color="inherit">Connect Wallet</Button>
-        </Toolbar>
-      </AppBar>
-    </Box>
   );
 }
