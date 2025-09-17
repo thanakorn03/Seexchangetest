@@ -82,23 +82,30 @@ export default function Page() {
   }, [isActive, provider, accounts]);
 
   const handleBuy = async () => {
-    if (!ETHValue || ETHValue <= 0) return;
-    try {
-      setLoading(true);
-      const signer = provider.getSigner();
-      const smartContract = new ethers.Contract(contractAddress, abi, signer);
-      const weiValue = parseUnits(ETHValue.toString(), "ether");
-      const tx = await smartContract.buy({ value: weiValue.toString() });
-      await tx.wait();
-      setNotification({ open: true, message: "Transaction Successful!", severity: "success" });
-      setETHValue("");
-      fetchBalance(); // refresh balance
-    } catch (err) {
-      setNotification({ open: true, message: err.message, severity: "error" });
-    } finally {
-      setLoading(false);
+  if (!ETHValue || ETHValue <= 0) return;
+  try {
+    setLoading(true);
+    const signer = provider.getSigner();
+    const smartContract = new ethers.Contract(contractAddress, abi, signer);
+    const weiValue = parseUnits(ETHValue.toString(), "ether");
+    const tx = await smartContract.buy({ value: weiValue.toString() });
+
+    // เช็ค tx ก่อนใช้งาน
+    if (tx) {
+      console.log("Transaction hash:", tx.hash);
     }
-  };
+
+    await tx?.wait();
+    setNotification({ open: true, message: "Transaction Successful!", severity: "success" });
+    setETHValue("");
+    fetchBalance(); // refresh balance
+  } catch (err) {
+    setNotification({ open: true, message: err.message, severity: "error" });
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleConnect = () => metaMask.activate(contractChain);
   const handleDisconnect = () => metaMask.resetState();
