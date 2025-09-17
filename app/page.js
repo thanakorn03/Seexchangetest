@@ -109,24 +109,41 @@ export default function Page() {
       <Container maxWidth="sm" sx={{ mt: 2 }}>
         {isActive ? (
           <Card>
-            <CardContent>
-              <Stack spacing={2}>
-                <Typography variant="h6">UDS</Typography>
-                <TextField label="Address" value={accounts[0]} />
-                <TextField label="UDS Balance" value={balance} />
-                <Divider />
-                <Typography>Buy UDS (1 ETH = 10 UDS)</Typography>
-                <TextField
-                  label="ETH"
-                  type="number"
-                  onChange={e => setETHValue(e.target.value)}
-                />
-                <Button variant="contained" onClick={handleBuy}>
-                  BUY
-                </Button>
-              </Stack>
-            </CardContent>
-          </Card>
+  <CardContent>
+    <Stack spacing={2}>
+      <Typography variant="h6">UDS</Typography>
+      
+      {/* แสดง Address */}
+      <TextField 
+        label="Address" 
+        value={accounts[0]} 
+        InputProps={{ readOnly: true }} 
+      />
+
+      {/* แสดง Balance */}
+      <TextField 
+        label="UDS Balance" 
+        value={balance} 
+        InputProps={{ readOnly: true }} 
+      />
+
+      <Divider />
+
+      {/* กรอก ETH */}
+      <Typography>Buy UDS (1 ETH = 10 UDS)</Typography>
+      <TextField
+        label="ETH"
+        type="number"
+        onChange={e => setETHValue(e.target.value)}
+      />
+
+      <Button variant="contained" onClick={handleBuy}>
+        BUY
+      </Button>
+    </Stack>
+  </CardContent>
+</Card>
+
         ) : null}
       </Container>
     </div>
